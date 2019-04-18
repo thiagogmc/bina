@@ -18,6 +18,7 @@ const resultCache = {
   duration: cacheDuration * 1000, // time in milisseconds
   data: new Array(),
   expired() {
+    return true
     return this.data ? (this.time.valueOf() + this.duration) < Date.now() : true
   },
   setData(data) {
@@ -30,14 +31,25 @@ debug(resultCache.data);
 
 module.exports = (cb) => {
   debug(resultCache.data.length)
-  if (!resultCache.expired() && resultCache.data.length != 0) {
+  if (!resultCache.expired()) {
     debug('Using cache result')
     cb(null, resultCache.data)
     return
   }
-
+  resultCache.data = [];
+  const promisesArr = new Array();
   for (let i = 0; i < hosts.length; i++) {
     debug('Connecting to Ldap Server…')
+    promisesArr.push(connectsToServer(i))
+  }
+  Promise.all(promisesArr)
+  .then(() => {
+    cb(null,resultCache.data)
+  })
+}
+
+function connectsToServer(i) {
+  return new Promise(((resolve) => {
     const ldapClient = ldapjs.createClient({
       url: hosts[i],
       tlsOptions: {
@@ -125,9 +137,9 @@ module.exports = (cb) => {
 
           debug(`Found ${list.length} objects`)
           resultCache.setData(list)
+          resolve()
         })
       })
     })
-  }
-  cb(null,resultCache.data)
+  }))
 }
