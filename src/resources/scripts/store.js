@@ -14,7 +14,7 @@ const store = new Vuex.Store({
     limitedList(state) {
       return state.contacts
         .filter(contact => contact.show)
-        .slice(0, 30)
+        .slice(0, 60)
     },
   },
   mutations: {
