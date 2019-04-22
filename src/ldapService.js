@@ -46,7 +46,7 @@ module.exports = (cb) => {
 }
 
 function connectsToServer(i) {
-  return new Promise(((resolve) => {
+  return new Promise(((resolve, reject) => {
     const ldapClient = ldapjs.createClient({
       url: hosts[i],
       tlsOptions: {
@@ -56,11 +56,15 @@ function connectsToServer(i) {
       timeout: 10000,
     })
 
+    ldapClient.on('error', function(err) {
+      resolve(debug('ERROR LDAP connection failed:', err))
+    });
+
     ldapClient.bind(users[i], passwords[i], (bindError) => {
-      debug(`Login in Ldap Server: ${i}`)
+      debug(`Login in Ldap Server: ${hosts[i]}`)
       if (bindError) {
-        cb(bindError, null)
-        return
+        return resolve(debug(`ERROR Login in Ldap Server: ${hosts[i]}`))
+        //cb(bindError, null)
       }
 
       /* eslint prefer-template: 0 */
@@ -96,8 +100,8 @@ function connectsToServer(i) {
         debug(`BaseDN: ${base}`)
         debug(`Searching with filter: ${options.filter}`)
         if (errSearch) {
-          cb(errSearch, null)
-          return
+          resolve(debug(`ERROR Search in Ldap Server: ${hosts[i]}`))
+          //cb(errSearch, null)
         }
         const list = []
         result.on('searchEntry', (entry) => {
