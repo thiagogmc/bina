@@ -18,7 +18,6 @@ const resultCache = {
   duration: cacheDuration * 1000, // time in milisseconds
   data: new Array(),
   expired() {
-    return true
     return this.data ? (this.time.valueOf() + this.duration) < Date.now() : true
   },
   setData(data) {
@@ -27,11 +26,9 @@ const resultCache = {
     this.data = this.data.concat(data)
   },
 }
-debug(resultCache.data);
 
 module.exports = (cb) => {
-  debug(resultCache.data.length)
-  if (!resultCache.expired()) {
+  if (!resultCache.expired() && resultCache.data.length > 0) {
     debug('Using cache result')
     cb(null, resultCache.data)
     return
