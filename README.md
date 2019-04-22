@@ -52,3 +52,12 @@ Just config to sync with url: `http://<binaServer>/contacts/<brand>.xml`
 Brand options:
 * Yealink
 * Grandstream
+
+## Add more than one LDAP server
+
+Just separate the parameters at .env with `;;`
+
+    LDAP_HOST=ldaps://192.168.0.1;;ldaps://192.168.0.2
+    LDAP_USER=user@domain.com;;user@domain2.com
+    LDAP_PASS=P455w0rd;;P455w0rd2
+    LDAP_BASE=ou=Organizational Unit,dc=domain,dc=com;;ou=Organizational Unit2,dc=domain2,dc=com2
