@@ -7,6 +7,8 @@ const phonesFields = process.env.PHONE_FIELDS.split(',')
 const otherFields = process.env.OTHER_FIELDS.split(',')
 const emailFields = process.env.EMAIL_FIELDS.split(',')
 const cacheDuration = process.env.CACHE_DURATION || 300 // default 5min
+const connectTimeout = process.env.CONNECT_TIMEOUT || 10 // default 10sec
+const operationTimeout = process.env.OPERATION_TIMEOUT || 10 // default 10sec
 
 const hosts = process.env.LDAP_HOST.split(';;')
 const users = process.env.LDAP_USER.split(';;')
@@ -36,7 +38,7 @@ module.exports = (cb) => {
   resultCache.data = [];
   const promisesArr = new Array();
   for (let i = 0; i < hosts.length; i++) {
-    debug('Connecting to Ldap Server…')
+    debug(`Connecting to Ldap Server… ${hosts[i]}`)
     promisesArr.push(connectsToServer(i))
   }
   Promise.all(promisesArr)
@@ -52,12 +54,20 @@ function connectsToServer(i) {
       tlsOptions: {
         rejectUnauthorized: false,
       },
-      connectTimeout: 10000,
-      timeout: 10000,
+      connectTimeout: connectTimeout * 1000,
+      timeout: operationTimeout * 1000,
     })
-
+    
     ldapClient.on('error', function(err) {
-      resolve(debug('ERROR LDAP connection failed:', err))
+      resolve(debug(`ERROR LDAP connection failed: ${hosts[i]}`, err))
+    });
+
+    ldapClient.on('timeout', (err) => {
+      resolve(debug(`ERROR TIMEOUT: ${hosts[i]}`, err));
+    });
+
+    ldapClient.on('connectTimeout', (err) => {
+      resolve(debug(`ERROR connectTimeout: ${hosts[i]}`, err));
     });
 
     ldapClient.bind(users[i], passwords[i], (bindError) => {
@@ -134,9 +144,13 @@ function connectsToServer(i) {
         })
         result.on('end', () => {
           // Order by displayName
-          list.sort((a, b) => a.fullName.localeCompare(b.fullName))
+          list.sort(function (a, b) {
+            if(a.fullName){
+              a.fullName.localeCompare(b.fullName)
+            }
+          })
 
-          debug(`Found ${list.length} objects`)
+          debug(`${hosts[i]}: Found ${list.length} objects`)
           resultCache.setData(list)
           resolve()
         })
