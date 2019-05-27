@@ -13,6 +13,8 @@ script#contact-card-template(type="x-template")
                 img(v-if="contact.photo && contact.photo.type" :src="'data:'+ contact.photo.type +';base64,' + contact.photo.data" alt="Foto")
                 img(v-else :src="'/contacts/' + contact.id + '.jpg'" alt="Foto")
             md-card-content
+              p(v-if="contact.company") Secretaria: 
+                strong {{ contact.company }} 
               p(v-if="contact.department") Lotação: 
                 strong {{ contact.department }} 
                   span(v-if="contact.physicalDeliveryOfficeName") - {{ contact.physicalDeliveryOfficeName }}
